@@ -1,0 +1,21 @@
+{
+  "name": "myserv",
+  "version": "0.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "NODE_ENV=development nodemon server.js --watch server.js",
+    "start": "NODE_ENV=production node server.js"
+  },
+  "dependencies": {
+    "chokidar": "^1.6.1",
+    "create-html": "^1.1.0",
+    "micro": "^6.1.0",
+    "sse": "^0.0.6"
+  },
+  "devDependencies": {
+    "browserify": "^13.1.1",
+    "es2020": "^1.1.9",
+    "nodemon": "^1.11.0"
+  }
+}
