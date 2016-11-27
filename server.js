@@ -6,40 +6,21 @@ const browserify = require('browserify')
 const createHTML = require('create-html')
 const SSE = require('sse')
 
-const sseFront = `
-<script>
-  const es = new EventSource("/sse");
-  es.onmessage = function (event) {
-    const res = JSON.parse(event.data)
-    switch(res.type){
-      case 'js': location.reload(); break;
-      case 'css':
-        document.head.querySelectorAll('link')
-        .forEach(function(x) {document.head.removeChild(x)})
-        const style = document.querySelector('#cssBundle')
-        ? document.querySelector('#cssBundle')
-        : document.createElement('style')
-        style.id = 'cssBundle'
-        style.innerHTML = res.data.replace(/\\n|\\s/gi, '')
-        document.head.appendChild(style)
-        break;
-    }
-  };
-</script>
-`
+const frontScript = require('./frontScript')
+const sseFront = process.env.NODE_ENV === 'development'
+  ? `<script>${frontScript}</script>`
+  : ''
 
 const html = createHTML({
   title: 'App',
   script: 'bundle.js',
   css: 'bundle.css',
   lang: 'fr',
-  body: '<p>example</p>' + (process.env.NODE_ENV === 'development' ? sseFront : ''),
+  body: '<p>example</p>' + sseFront,
   favicon: null,
 })
 
 const index = (req, res) => {
-  res.writeHead(200)
-  res.end(html, 'utf-8')
 }
 const js = (req, res) => {
   const b = browserify(resolve(__dirname, './client.js'), {transform: ['es2020']})
@@ -56,13 +37,23 @@ const css = (req, res) => {
 
 const srv = micro(function (req, res) {
   switch(req.url){
-    case 'favicon.ico': return res.end('')
-    case '/': return index(req, res)
-    case '/bundle.js': return js(req, res)
-    case '/bundle.css': return css(req, res)
+    case 'favicon.ico':
+      res.end('')
+      break;
+    case '/':
+      res.writeHead(200)
+      res.end(html, 'utf-8')
+      break;
+    case '/bundle.js':
+      js(req, res)
+      break;
+    case '/bundle.css':
+      css(req, res)
+      break;
     default:
       res.writeHead(404)
-      return res.end('Not Found.', 'utf-8')
+      res.end('Not Found.', 'utf-8')
+      break;
   }
 })
 srv.listen(3000, () => {
